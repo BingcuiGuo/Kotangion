@@ -57,6 +57,29 @@ Actor(IID_PLAYER, 0, 128, new_petri, 0)
 }
 
 
+bool Actor::isOverlap(double x, double y)
+{
+    double distance = pow((getX()-x),2)+pow((getY()-y),2);
+    return distance <= 4*SPRITE_RADIUS*SPRITE_RADIUS;
+}
+bool Actor::checkOverlap(Actor* actor_pt)
+{
+    double current_x = actor_pt -> getX();
+    double current_y = actor_pt -> getY();
+    return isOverlap(current_x, current_y);
+}
+
+ double Actor::calculate_distance(Actor* a, Actor*b)
+{
+    double a_x = a->getX();
+    double a_y = a->getY();
+    double b_x = b->getX();
+    double b_y = b->getY();
+    double distance = pow((a_x-b_x),2)+pow((a_y-b_y),2);
+    return distance;
+}
+
+
 //check alive status first and if the user press left, it would move the socrates to the left; if the user press right,
 //then the socrate will move to the right; if the user press enter, then the socrate would use the flame;
 // if the user press space, the socrate would use the spray
@@ -89,7 +112,7 @@ void Socrates::doSomething()
                     {
                         double spray_x, spray_y;
                         getPositionInThisDirection(getDirection(), 2*SPRITE_RADIUS, spray_x, spray_y);
-                        get_student_world()->add_spray(spray_x, spray_y,getDirection());
+                        get_student_world()->add_actor(new spray(spray_x, spray_y, get_student_world(), getDirection(), this));
                         spray_charges --;
                         get_student_world()->playSound(SOUND_PLAYER_SPRAY);
                     }
@@ -179,3 +202,115 @@ weapon(IID_FLAME, x,y, new_petri, dir, 32, new_socrates){set_loss_pt(5);}
 //spray constructor
 spray::spray(double x, double y, StudentWorld* new_petri,  Direction dir, Socrates* new_socrates):
 weapon(IID_SPRAY, x,y, new_petri, dir, 112, new_socrates){set_loss_pt(2); }
+
+//fungus constructor
+fungus::fungus(double startX, double startY,StudentWorld* new_petri, bool damage, Direction dir, int depth):
+Actor(IID_FUNGUS,startX,startY,new_petri, damage, dir, depth){
+    life_time = max(rand()%(300-10*new_petri->getLevel()),50);
+}
+
+void fungus::doSomething()
+{
+    if(!check_alive()) return;
+    else{
+        
+        if(get_student_world()->get_socrate()->check_alive())
+        {
+            get_student_world() -> increaseScore(-50);
+            set_alive(-1);
+            int current_point = get_student_world() -> get_socrate() ->get_hit_pt();
+            get_student_world()->get_socrate()->set_alive(current_point-20);
+            return;
+        }
+        if(life_time<=0) set_alive(-1);
+        life_time--;
+    }
+}
+
+bacteria::bacteria(int image_id, double x, double y, StudentWorld* new_petri, int movement_plan_distance,
+            int initial_point,Direction dir,bool damage, int depth):Actor(image_id, x,y,new_petri, damage, dir, depth)
+{
+    m_movement_distance = movement_plan_distance;
+    set_alive(initial_point);
+    food_count = 0;
+}
+
+void bacteria::doSomething()
+{
+    if(!check_alive()) return;
+    else{
+        
+        if(checkOverlap(get_student_world()->get_socrate()))
+        {
+            int current_hp = get_student_world()->get_socrate()->get_hit_pt();
+                   get_student_world()->get_socrate()->set_alive(current_hp-1);
+        }
+       else if(food_count==3)
+       {
+               if(getX()<VIEW_WIDTH/2) moveTo(getX()+SPRITE_RADIUS,getY());
+               else if(getX()>VIEW_WIDTH/2) moveTo(getX()-SPRITE_RADIUS,getY());
+               if(getY()<VIEW_HEIGHT/2) moveTo(getX(), getY()+SPRITE_RADIUS);
+               else if(getY()<VIEW_HEIGHT/2) moveTo(getX(), getY()-SPRITE_RADIUS);
+                   double new_x = getX();
+               double new_y = getY();
+               bacteria* new_bacteria = new bacteria(image_id,new_x, new_y, get_student_world(), movement_plan_distance, initial_point,dir,damage, depth );
+               get_student_world()->add_actor(new_bacteria);
+               food_count = 0;
+       }
+       else{
+           if(get_student_world()->food_overlap(this)!=nullptr)
+           {
+               food_count++;
+               get_student_world()->food_overlap(this)->set_alive(-1);
+           }
+       }
+        if(m_movement_distance>=0)
+        {
+            m_movement_distance--;
+            double potential_x, potential_y;
+            getPositionInThisDirection(getDirection(), 3, potential_x, potential_y);
+            double center_distance = pow((potential_x-VIEW_WIDTH/2),2)+pow((potential_y-VIEW_HEIGHT/2),2);
+            
+            if(!get_student_world()->movement_overlap(potential_x, potential_y) &&center_distance < VIEW_RADIUS*VIEW_RADIUS )
+            {
+              
+                    moveAngle(getDirection(),3);
+                
+            }
+            else{
+                int new_direction = randInt(0, 359);
+                setDirection(new_direction);
+                m_movement_distance=10;
+                return;
+            }
+            
+        }else
+        {
+            if(!get_student_world()->food_overlap(this))
+            {
+                int new_dir = randInt(0,359);
+                setDirection(new_dir);
+                m_movement_distance=10;
+                return;
+            }
+            else{
+                
+                double potential_x, potential_y;
+                
+                int new_direction = get_student_world() -> food_overlap(this)->getDirection();
+                setDirection(new_direction);
+                double new_distance = calculate_distance(this, get_student_world()->food_overlap(this));
+                getPositionInThisDirection(new_direction ,new_distance, potential_x, potential_y);
+                if(get_student_world()->movement_overlap(potential_x, potential_y));
+                {int new_dir = randInt(0,359);
+                 setDirection(new_dir);
+                    m_movement_distance=10;}
+               
+            }
+            
+        
+            
+        }
+    }
+}
+

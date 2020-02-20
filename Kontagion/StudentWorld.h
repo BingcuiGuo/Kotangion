@@ -15,13 +15,19 @@ public:
     virtual int move();
     virtual void cleanUp();
     Actor* check_damage_overlap(Actor* a);
-    void add_spray(double x, double y, int direction);
     void add_flame(double x, double y);
     Actor* check_other_overlap(Actor* a);
-    ~StudentWorld(); 
+    Actor* get_socrate() const;
+    bool movement_overlap(double x, double y); 
+    ~StudentWorld();
+    void add_actor(Actor* a);
+    Actor* food_overlap(Actor*a) ;
+    
 private:
     std::list<Actor*> all_actor;
     Socrates* player;
 };
 
 #endif // STUDENTWORLD_H_
+
+

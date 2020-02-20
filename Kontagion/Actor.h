@@ -11,11 +11,16 @@ public:
     virtual void doSomething() = 0;
     bool check_alive() const;
     void set_alive(int status);
-    int get_hit_pt() const; 
+    int get_hit_pt() const;
+    virtual bool isdirt() const {return false; }
     StudentWorld* get_student_world() const;
     bool get_damagae_status() const;
     void calculate_position(int positional_angle, int units, double& new_x, double& new_y,double center_x, double center_y);
     void move_new_direction(double center_x, double center_y, int center_diretional_angle, int moving_units);
+    bool isOverlap(double x, double y);
+    bool checkOverlap(Actor* actor_pt);
+    virtual bool is_food(){return false;}
+    double calculate_distance(Actor* a, Actor*b);
 private:
     int hit_pt;
     bool isdamaneagble;
@@ -42,12 +47,14 @@ class dirt:public Actor{
 public:
      dirt(double startX, double startY,StudentWorld* new_petri, Direction dir = 0, int depth = 1);
      virtual void doSomething();
+    virtual bool isdirt() const {return true;}
 };
 
 class food: public Actor{
 public:
     food(StudentWorld* new_petri, double x,double y);
     void doSomething();
+    virtual bool is_food(){return true;}
 };
 
 class weapon:public Actor{
@@ -73,8 +80,26 @@ public:
 class spray:public weapon{
 public:
     spray(double x, double y, StudentWorld* new_petri,  Direction dir,  Socrates* new_socrates);
-
-  
 };
+
+class bacteria:public Actor{
+public:
+    bacteria(int image_id, double x, double y, StudentWorld* new_petri, int movement_plan_distance,int initial_point,
+            Direction dir, bool damage=true,  int depth=0);
+    void doSomething();
+private:
+    int m_movement_distance;
+    int food_count; 
+};
+
+class fungus:public Actor{
+public:
+     fungus( double startX, double startY,StudentWorld* new_petri, bool damage=true, Direction dir = 0, int depth = 1);
+    void doSomething(); 
+private:
+    int life_time;
+};
+
+
 
 #endif // ACTOR_H_

@@ -15,7 +15,7 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
-    
+    player = nullptr;
 }
 
 //construct a new socrates and the number of dirt in the game
@@ -57,6 +57,7 @@ int StudentWorld::init()
            dirt* new_dirt = new dirt(position_x, position_y,this);
            all_actor.push_back(new_dirt);
        }
+    
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -111,6 +112,8 @@ StudentWorld::~StudentWorld()
     cleanUp();
 }
 
+
+
 Actor* StudentWorld::check_other_overlap(Actor* a)
 {
     list<Actor*>::iterator it = all_actor.begin();
@@ -134,12 +137,10 @@ Actor* StudentWorld::check_damage_overlap(Actor* a)
 {
     list<Actor*>::iterator it = all_actor.begin();
     while(it !=all_actor.end())
-    {  double current_x = a->getX();
-        double current_y = a->getY();
+    {
         double other_x = (*it)->getX();
         double other_y = (*it)-> getY();
-        double distance = pow((current_x-other_x),2)+pow((current_y-other_y),2);
-        if(distance <= SPRITE_RADIUS*2 && (*it) -> get_damagae_status())
+        if(a->isOverlap(other_x, other_y) && (*it) -> get_damagae_status())
         {
             return (*it);
         }
@@ -148,25 +149,75 @@ Actor* StudentWorld::check_damage_overlap(Actor* a)
     return nullptr;
 }
 
-//add spray to the petri-dish
-void StudentWorld::add_spray(double x, double y, int direction){
-    spray* new_spray = new spray(x, y, this, direction, player);
-    all_actor.push_back(new_spray);
-}
+
 
 //add flame to the petri-dish
 void StudentWorld::add_flame(double x, double y)
 {
-//    int current_angle = player -> getDirection();
-    int current_angle = 0;
-    int initial_directional = player -> getDirection();
+   int current_angle = player -> getDirection();
+    
     for (int i=0;i<16; i++)
     {
         double new_flame_x, new_flame_y;
-        player -> getPositionInThisDirection(initial_directional, 2*SPRITE_RADIUS, new_flame_x, new_flame_y);
+        player -> getPositionInThisDirection(current_angle, 2*SPRITE_RADIUS, new_flame_x, new_flame_y);
         flame* new_flame = new flame(new_flame_x, new_flame_y,this, current_angle, player);
         current_angle += 22;
-        initial_directional += 22;
+      
         all_actor.push_back(new_flame);
     }
 }
+
+
+Actor* StudentWorld::get_socrate() const
+{
+    return player;
+}
+
+//check whether it is bateria and the socrate's overlap
+bool StudentWorld::movement_overlap(double x, double y) 
+{
+    list<Actor*>::iterator it = all_actor.begin();
+       while(it !=all_actor.end())
+       { if((*it)->isdirt())
+       {
+           double current_x = (*it)->getX();
+           double current_y = (*it)->getY();
+           double distance = pow((current_x-x),2)+pow((current_y-y),2);
+           if(distance <=SPRITE_RADIUS*SPRITE_RADIUS) return true;
+       }
+       }
+       return false;
+}
+
+void StudentWorld::add_actor(Actor* a)
+{
+    all_actor.push_back(a);
+}
+
+Actor* StudentWorld::food_overlap(Actor* a) 
+{
+    list<Actor*>::iterator it = all_actor.begin();
+    int min_distance = 10000;
+    Actor* initial_food = nullptr;
+    double current_x = a->getX();
+    double current_y = a->getY();
+       while(it !=all_actor.end())
+       {
+           if((*it)->is_food())
+           {
+               double food_x = (*it)->getX();
+               double food_y = (*it)->getY();
+               double current_distance = pow((current_x - food_x),2)+pow((current_y-food_y),2);
+               if(current_distance < min_distance)
+               {
+                   min_distance = current_distance;
+                   initial_food = (*it);
+               }
+           }
+           it++;
+       }
+    return initial_food;
+}
+
+
+
