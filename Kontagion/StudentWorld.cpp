@@ -197,7 +197,7 @@ void StudentWorld::add_actor(Actor* a)
 Actor* StudentWorld::food_overlap(Actor* a) 
 {
     list<Actor*>::iterator it = all_actor.begin();
-    int min_distance = 10000;
+    int min_distance = 50000;
     Actor* initial_food = nullptr;
     double current_x = a->getX();
     double current_y = a->getY();

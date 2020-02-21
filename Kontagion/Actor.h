@@ -84,12 +84,16 @@ public:
 
 class bacteria:public Actor{
 public:
-    bacteria(int image_id, double x, double y, StudentWorld* new_petri, int movement_plan_distance,int initial_point,
-            Direction dir, bool damage=true,  int depth=0);
+    bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int movement_plan_distance=0,
+            Direction dir=90, bool damage=true,  int depth=0);
     void doSomething();
+
+   
 private:
     int m_movement_distance;
-    int food_count; 
+    int food_count;
+    int initial_pt;
+    int my_id; 
 };
 
 class fungus:public Actor{
@@ -100,6 +104,21 @@ private:
     int life_time;
 };
 
+class regular_salmonella:public bacteria{
+public:
+    regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=4);
+};
+
+class aggressive_salmonella:public bacteria{
+public:
+    aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=10);
+    
+};
+
+class E_coli: public bacteria{
+public:
+    E_coli(double x, double y, StudentWorld* new_petri, int initial_pt=5, Direction dir = 90, int depth=0);
+};
 
 
 #endif // ACTOR_H_

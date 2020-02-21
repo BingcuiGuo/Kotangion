@@ -94,14 +94,14 @@ void Socrates::doSomething()
             switch(ch)
             {
                 case KEY_PRESS_LEFT:
-                   positional_angle -= 5;
+                   positional_angle += 5;
                    double next_x, next_y;
                     calculate_position(positional_angle,128,next_x,next_y,128,128);
                     moveTo(next_x, next_y);
                     setDirection(positional_angle+180);
                     break;
                 case KEY_PRESS_RIGHT:
-                    positional_angle += 5;
+                    positional_angle -= 5;
                     double next_x_2, next_y_2;
                     calculate_position(positional_angle,128,next_x_2,next_y_2,128,128);
                     moveTo(next_x_2, next_y_2);
@@ -227,24 +227,28 @@ void fungus::doSomething()
     }
 }
 
-bacteria::bacteria(int image_id, double x, double y, StudentWorld* new_petri, int movement_plan_distance,
-            int initial_point,Direction dir,bool damage, int depth):Actor(image_id, x,y,new_petri, damage, dir, depth)
+bacteria::bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int movement_plan_distance,Direction dir, bool damage, int depth):Actor(image_id, x,y,new_petri, true, dir, depth)
 {
     m_movement_distance = movement_plan_distance;
     set_alive(initial_point);
     food_count = 0;
+    initial_pt = initial_point;
+    my_id = image_id;
 }
+
 
 void bacteria::doSomething()
 {
+    //check whether the bacteria is still alive
     if(!check_alive()) return;
     else{
-        
+        //check whether the bacteria overlaps with anotehr socrate, if it is, then hurt the socrate by 1 pt
         if(checkOverlap(get_student_world()->get_socrate()))
         {
             int current_hp = get_student_world()->get_socrate()->get_hit_pt();
                    get_student_world()->get_socrate()->set_alive(current_hp-1);
         }
+        //else if see whether the food count of this bacteria is 3; if so, then add a new bacteria at the coordinate
        else if(food_count==3)
        {
                if(getX()<VIEW_WIDTH/2) moveTo(getX()+SPRITE_RADIUS,getY());
@@ -253,7 +257,7 @@ void bacteria::doSomething()
                else if(getY()<VIEW_HEIGHT/2) moveTo(getX(), getY()-SPRITE_RADIUS);
                    double new_x = getX();
                double new_y = getY();
-               bacteria* new_bacteria = new bacteria(image_id,new_x, new_y, get_student_world(), movement_plan_distance, initial_point,dir,damage, depth );
+               bacteria* new_bacteria = new bacteria(my_id,new_x, new_y, get_student_world(), m_movement_distance,initial_pt,getDirection());
                get_student_world()->add_actor(new_bacteria);
                food_count = 0;
        }
@@ -271,7 +275,7 @@ void bacteria::doSomething()
             getPositionInThisDirection(getDirection(), 3, potential_x, potential_y);
             double center_distance = pow((potential_x-VIEW_WIDTH/2),2)+pow((potential_y-VIEW_HEIGHT/2),2);
             
-            if(!get_student_world()->movement_overlap(potential_x, potential_y) &&center_distance < VIEW_RADIUS*VIEW_RADIUS )
+            if(!get_student_world()->movement_overlap(potential_x, potential_y) && center_distance < VIEW_RADIUS*VIEW_RADIUS)
             {
               
                     moveAngle(getDirection(),3);
@@ -296,7 +300,6 @@ void bacteria::doSomething()
             else{
                 
                 double potential_x, potential_y;
-                
                 int new_direction = get_student_world() -> food_overlap(this)->getDirection();
                 setDirection(new_direction);
                 double new_distance = calculate_distance(this, get_student_world()->food_overlap(this));
@@ -305,7 +308,6 @@ void bacteria::doSomething()
                 {int new_dir = randInt(0,359);
                  setDirection(new_dir);
                     m_movement_distance=10;}
-               
             }
             
         
@@ -313,4 +315,21 @@ void bacteria::doSomething()
         }
     }
 }
+
+regular_salmonella::regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt):bacteria(IID_SALMONELLA, x, y, new_petri,initial_pt )
+{
+}
+
+aggressive_salmonella::aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt):
+bacteria(IID_SALMONELLA,x,y,new_petri, initial_pt)
+{
+}
+
+
+E_coli::E_coli(double x, double y, StudentWorld* new_petri, int initial_pt, Direction dir , int depth):
+bacteria(IID_ECOLI,x, y, new_petri, initial_pt)
+{
+    
+}
+
 
