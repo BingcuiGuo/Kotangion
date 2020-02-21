@@ -113,7 +113,7 @@ StudentWorld::~StudentWorld()
 }
 
 
-
+//check whether actor would overlap with another thing within 8 pixels 
 Actor* StudentWorld::check_other_overlap(Actor* a)
 {
     list<Actor*>::iterator it = all_actor.begin();
@@ -132,7 +132,7 @@ Actor* StudentWorld::check_other_overlap(Actor* a)
     return nullptr;
 }
 
-//iterate trhough all actor list and check whether actor a overlaps with a damageable thing and if so, return the damanagebla thing's pointer, otherwise, return nullptr
+//iterate trhough all actor list and check whether actor a overlaps with a damageable thing within 64 pixels and if so, return the damanagebla thing's pointer, otherwise, return nullptr
 Actor* StudentWorld::check_damage_overlap(Actor* a)
 {
     list<Actor*>::iterator it = all_actor.begin();
@@ -167,13 +167,13 @@ void StudentWorld::add_flame(double x, double y)
     }
 }
 
-
+//return socrate
 Actor* StudentWorld::get_socrate() const
 {
     return player;
 }
 
-//check whether it is bateria and the socrate's overlap
+//check whether it is bateria and the dirt overlaps if so return true
 bool StudentWorld::movement_overlap(double x, double y) 
 {
     list<Actor*>::iterator it = all_actor.begin();
@@ -189,11 +189,13 @@ bool StudentWorld::movement_overlap(double x, double y)
        return false;
 }
 
+//add an actor to the petri
 void StudentWorld::add_actor(Actor* a)
 {
     all_actor.push_back(a);
 }
 
+//check whether the actor could be overlap with a food within 128*128 and return the closest food
 Actor* StudentWorld::food_overlap(Actor* a) 
 {
     list<Actor*>::iterator it = all_actor.begin();
@@ -208,7 +210,7 @@ Actor* StudentWorld::food_overlap(Actor* a)
                double food_x = (*it)->getX();
                double food_y = (*it)->getY();
                double current_distance = pow((current_x - food_x),2)+pow((current_y-food_y),2);
-               if(current_distance < min_distance)
+               if(current_distance < 128*128 && current_distance < min_distance)
                {
                    min_distance = current_distance;
                    initial_food = (*it);

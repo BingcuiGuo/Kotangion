@@ -82,18 +82,23 @@ public:
     spray(double x, double y, StudentWorld* new_petri,  Direction dir,  Socrates* new_socrates);
 };
 
+
 class bacteria:public Actor{
 public:
-    bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int movement_plan_distance=0,
+    bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int hurt_pt, int movement_plan_distance=0,
             Direction dir=90, bool damage=true,  int depth=0);
-    void doSomething();
-
-   
+   void doSomething();
+protected:
+    void hurt_socrate();
+    void generate_new();
+    void eat_food();
+    void move_to_food();
 private:
     int m_movement_distance;
     int food_count;
     int initial_pt;
-    int my_id; 
+    int my_id;
+    int hurt_point;
 };
 
 class fungus:public Actor{
@@ -106,19 +111,25 @@ private:
 
 class regular_salmonella:public bacteria{
 public:
-    regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=4);
+    regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=4, int hurt_pt = 1);
 };
 
 class aggressive_salmonella:public bacteria{
 public:
-    aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=10);
+    aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=10, int hurt_pt = 2);
     
 };
 
 class E_coli: public bacteria{
 public:
-    E_coli(double x, double y, StudentWorld* new_petri, int initial_pt=5, Direction dir = 90, int depth=0);
+    E_coli(double x, double y, StudentWorld* new_petri, int initial_pt=5,int hurt_pt = 4);
 };
 
-
+class pit:public Actor{
+public:  pit(double x, double y, StudentWorld* new_petri, int initial_r_s = 5, int initial_a_s = 3, int initial_Ecoli = 2, Direction dir=0, int depth=1);
+private:
+    int r_s;
+    int a_s;
+    int Ecoli;
+};
 #endif // ACTOR_H_
