@@ -15,6 +15,7 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
+    pit_over = false; 
     player = nullptr;
 }
 
@@ -221,5 +222,9 @@ Actor* StudentWorld::food_overlap(Actor* a)
     return initial_food;
 }
 
+void StudentWorld::set_pit_over()
+{
+    pit_over=true; 
+}
 
 

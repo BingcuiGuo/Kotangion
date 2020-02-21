@@ -452,11 +452,91 @@ bacteria(IID_ECOLI,x, y, new_petri, initial_pt, hurt_pt)
     
 }
 
-pit::pit(double x, double y, StudentWorld* new_petri, int initial_r_s , int initial_a_s , int initial_Ecoli, Direction dir, int depth):Actor(IID_PIT,x,y,new_petri, true, dir,depth){
+pit::pit(double x, double y, StudentWorld* new_petri, int initial_r_s , int initial_a_s , int initial_Ecoli, Direction dir, int depth):Actor(IID_PIT,x,y,new_petri, false, dir,depth){
     r_s = initial_r_s;
     a_s = initial_a_s;
     Ecoli = initial_Ecoli;
 }
+
+void pit::doSomething()
+{
+    if(r_s==0 && a_s ==0 && Ecoli == 0)
+    {
+        get_student_world()->set_pit_over();
+        set_alive(-1); }
+    else{
+        int ch;
+        char a;
+        if(r_s>0 && a_s >0 && Ecoli>0)
+        {ch = randInt(1, 3);
+            if(ch==1) {a='r';}
+            else if (ch==2) {a='a';}
+            else {a='e';}
+        }
+        else if(r_s >0 && a_s >0)
+        {ch=randInt(1, 2);
+            if(ch==1) {a='r';}
+            else {a='a';}
+        }
+        else if (a_s > 0 && Ecoli >0)
+        {ch =randInt(1,2);
+            if(ch==1) a='a';
+            else a='e';
+        }
+        else if(r_s >0 && Ecoli > 0)
+        {ch =randInt(1,2);
+            if(ch==1) a='r';
+            else a='e';
+        }
+        else if(r_s>0) a='r';
+        else if(a_s>0) a='a';
+        else a='e';
+                switch(a)
+                {
+                    case 'r':
+                        regular_salmonella* new_regular = new regular_salmonella(getX(), getY(), get_student_world());
+                        get_student_world()->add_actor(new_regular);
+                        break;
+                    case 'a':
+                        aggressive_salmonella* new_aggressive = new aggressive_salmonella(getX(), getY(), get_student_world());
+                        get_student_world()->add_actor(new_aggressive);
+                        
+                        break;
+                    case 'e':
+                        E_coli* new_ecoli = new E_coli(getX(), getY(), get_student_world());
+                        get_student_world()->add_actor(new_ecoli);
+                        break;
+    }
+    
+}
+}
+
+goodie::goodie(int image_id, double x, double y, StudentWorld* new_petri, int sound_num, int increase_pt, int dir, int dep):Actor(image_id, x, y, new_petri, true, dir, dep)
+{
+    life_time = max(rand()%(300-10*get_student_world()->getLevel()),50);
+    int sound = sound_num;
+    int increased_point = increase_pt;
+}
+
+void goodie::doSomething()
+{
+    if(!check_alive()) return;
+    else{
+        if(checkOverlap(get_student_world()->get_socrate()))
+        {get_student_world()->increaseScore(increased_point);
+            set_alive(-1);
+            specific_reaction();
+            get_student_world()->playSound(sound);
+            return;
+        }
+        
+    }
+    if(life_time<=0)
+    {set_alive(-1);
+    }
+    life_time--; 
+}
+
 
 
 

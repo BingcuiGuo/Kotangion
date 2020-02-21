@@ -127,9 +127,21 @@ public:
 
 class pit:public Actor{
 public:  pit(double x, double y, StudentWorld* new_petri, int initial_r_s = 5, int initial_a_s = 3, int initial_Ecoli = 2, Direction dir=0, int depth=1);
+    void doSomething(); 
 private:
     int r_s;
     int a_s;
     int Ecoli;
+};
+
+class goodie:public Actor{
+public:
+    goodie(int image_id, double x, double y, StudentWorld* new_petri, int sound_num, int increase_pt, int dir=0, int dep=1);
+    void doSomething();
+    void specific_reaction() = 0; 
+private:
+    double life_time;
+    int sound;
+    int increased_point;
 };
 #endif // ACTOR_H_

@@ -22,10 +22,12 @@ public:
     ~StudentWorld();
     void add_actor(Actor* a);
     Actor* food_overlap(Actor*a) ;
+    void set_pit_over(); 
     
 private:
     std::list<Actor*> all_actor;
     Socrates* player;
+    bool pit_over; 
 };
 
 #endif // STUDENTWORLD_H_
