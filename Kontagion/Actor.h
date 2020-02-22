@@ -35,7 +35,8 @@ class Socrates:public Actor{
 public:
     Socrates(StudentWorld* new_petri);
     virtual void doSomething();
-    int get_directional_angle() const; 
+    int get_directional_angle() const;
+    void set_flame(int flame_added); 
 private:
     int positional_angle;
     int spray_charges;
@@ -87,12 +88,13 @@ class bacteria:public Actor{
 public:
     bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int hurt_pt, int movement_plan_distance=0,
             Direction dir=90, bool damage=true,  int depth=0);
-   void doSomething();
+    void doSomething();
 protected:
     void hurt_socrate();
     void generate_new();
     void eat_food();
-    void move_to_food();
+    virtual void continue_moving();
+    virtual void move_to_food();
 private:
     int m_movement_distance;
     int food_count;
@@ -112,17 +114,22 @@ private:
 class regular_salmonella:public bacteria{
 public:
     regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=4, int hurt_pt = 1);
+    virtual void doSomething();
 };
 
 class aggressive_salmonella:public bacteria{
 public:
     aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=10, int hurt_pt = 2);
+    virtual void doSomething();
     
 };
 
 class E_coli: public bacteria{
 public:
     E_coli(double x, double y, StudentWorld* new_petri, int initial_pt=5,int hurt_pt = 4);
+    virtual void doSomething();
+    virtual void continue_moving();
+    virtual void move_to_food();
 };
 
 class pit:public Actor{
@@ -136,12 +143,33 @@ private:
 
 class goodie:public Actor{
 public:
-    goodie(int image_id, double x, double y, StudentWorld* new_petri, int sound_num, int increase_pt, int dir=0, int dep=1);
+    goodie(int image_id, double x, double y, StudentWorld* new_petri, int increase_pt, int dir=0, int dep=1);
     void doSomething();
-    void specific_reaction() = 0; 
+    virtual void specific_reaction() = 0; 
 private:
     double life_time;
-    int sound;
     int increased_point;
+};
+
+class restore_health_goodie:public goodie
+{
+public:
+    restore_health_goodie(double x, double y, StudentWorld* new_petri);
+    virtual void specific_reaction();
+
+};
+
+class flame_thrower_goodie:public goodie
+{
+public:
+     flame_thrower_goodie(double x, double y, StudentWorld* new_petri);
+    virtual void specific_reaction();
+};
+
+class extra_life_goodie:public goodie
+{
+public:
+    extra_life_goodie(double x, double y, StudentWorld* new_petri);
+    virtual void specific_reaction(); 
 };
 #endif // ACTOR_H_

@@ -25,6 +25,31 @@ int StudentWorld::init()
     player = new Socrates(this);
     int L = getLevel();
    
+    for (int i=0; i<L; i++)
+    {
+        int position_x, position_y;
+        size_t current_size = all_actor.size();
+        do{
+         do{
+            position_x = randInt(8,248);
+            position_y = randInt(8,248);
+               }while((position_x-128)*(position_x-128)+(position_y-128)*(position_y-128) > 120*120);
+       
+            pit* new_pit = new pit(position_x, position_y,this);
+                   if(check_other_overlap(new_pit)==nullptr)
+                   {
+                        all_actor.push_back(new_pit);
+                   }
+                   else delete new_pit;
+               
+        }while(all_actor.size()==current_size);
+        
+    }
+    
+    
+
+    
+    
     int food_num = min(5*L, 25);
     for (int i=0; i<food_num; i++)
     {
@@ -66,19 +91,26 @@ int StudentWorld::init()
 //enable everything in the all_actor to do something
 int StudentWorld::move()
 {
-    // This code is here merely to allow the game to build, run, and terminate after you hit enter.
-    // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
-//    decLives();
-    
-//    return GWSTATUS_PLAYER_DIED;
-    
+//ask everyone to do something
     list<Actor*>::iterator i = all_actor.begin();
     while(i !=all_actor.end())
     {
         (*i)->doSomething();
-        i++;
+        if(!player->check_alive()) return GWSTATUS_PLAYER_DIED;
+        else i++;
     }
     player->doSomething();
+
+//if socrates ahs cleared the current petri dish and the pits have disappeared, then advance to next level
+    list<Actor*>::iterator it = all_actor.begin();
+    for(int i=0; i<getLevel(); i++)
+    {
+        if((*it)->check_alive())  break;
+    }
+    
+//    return GWSTATUS_FINISHED_LEVEL;
+  
+    
     list<Actor*>::iterator check_death = all_actor.begin();
     while(check_death!=all_actor.end())
     {
@@ -91,6 +123,23 @@ int StudentWorld::move()
         }
         check_death++;
     }
+    int chance_fungus = max(510-getLevel()*10, 200);
+    int rand_num = randInt(0,chance_fungus);
+    if(rand_num==0)
+    {
+        int new_dir = randInt(0,359);
+        fungus* new_fungus = new fungus(128,128,this,true,new_dir);
+        double potential_x, potential_y;
+        new_fungus -> getPositionInThisDirection(new_dir, VIEW_RADIUS, potential_x, potential_y);
+    }
+    int chance_goodie = max(510-getLevel()*10, 250);
+    rand_num = randInt(1,10);
+    if(1<=rand_num<=6)
+    {
+        restore_health_goodie* new_restore = new restore_health_goodie(
+    }
+    
+    
     return GWSTATUS_CONTINUE_GAME;
 }
 
