@@ -240,6 +240,8 @@ bacteria::bacteria(int image_id, double x, double y, StudentWorld* new_petri, in
     initial_pt = initial_point;
     my_id = image_id;
     hurt_point = hurt_pt;
+    get_student_world()->increase_counter();
+    continue_moving_or_not = true;
 }
 
 void bacteria::doSomething()
@@ -294,16 +296,14 @@ void bacteria::eat_food()
 
 void bacteria::continue_moving()
 {
-    if(m_movement_distance>0)
+    if(m_movement_distance>0 && continue_moving_or_not == true)
     {m_movement_distance--;
-    double potential_x, potential_y;
-    for(int i=0; i<3; i++)
-    {
-        getPositionInThisDirection(getDirection(), 1, potential_x, potential_y);
+        double potential_x, potential_y;
+        getPositionInThisDirection(getDirection(), 3, potential_x, potential_y);
         double center_distance = pow((potential_x-VIEW_WIDTH/2),2)+pow((potential_y-VIEW_HEIGHT/2),2);
         if(!get_student_world()->movement_overlap(potential_x, potential_y) && center_distance < VIEW_RADIUS*VIEW_RADIUS)
             {
-                moveAngle(getDirection(),1);
+                moveAngle(getDirection(),3);
             }
         else
         {
@@ -312,7 +312,7 @@ void bacteria::continue_moving()
                                    m_movement_distance=10;
                                    return;
         }
-    }
+    
     
 }
 }
@@ -320,7 +320,8 @@ void bacteria::continue_moving()
 
 void bacteria::move_to_food()
 {
-    if(m_movement_distance<=0){
+    if(m_movement_distance<=0 && continue_moving_or_not == true){
+        double new_directional_angle = get_change_angle(get_student_world()->get_socrate());
     if(!get_student_world()->food_overlap(this))
     {
         int new_dir = randInt(0,359);
@@ -329,14 +330,12 @@ void bacteria::move_to_food()
         return;
     }
     else{
-        double distance_to_food = calculate_distance(this, get_student_world() ->food_overlap(this));
+        
          double potential_x, potential_y;
-        for(int i=0; i<distance_to_food;i++)
-        {
-            getPositionInThisDirection(getDirection(), 1, potential_x, potential_y);
+            getPositionInThisDirection(new_directional_angle, 3, potential_x, potential_y);
             if(!get_student_world()->movement_overlap(potential_x, potential_y))
                 {
-                    moveAngle(getDirection(),1);
+                    moveAngle(new_directional_angle,3);
                 }
             else{
 
@@ -345,11 +344,16 @@ void bacteria::move_to_food()
                  m_movement_distance=10;
                  return;
             }
-        }
+        
         
         
     }
 }
+}
+
+ void bacteria::set_continue_moving()
+{
+    continue_moving_or_not = false;
 }
 
 regular_salmonella::regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt,int hurt_pt):bacteria(IID_SALMONELLA, x, y, new_petri,initial_pt,hurt_pt ){}
@@ -372,17 +376,16 @@ void aggressive_salmonella::doSomething()
     if(socrate_distance <=72*72) 
     {
         Direction new_dir = get_student_world()->get_socrate()->getDirection();
-        double distance = calculate_distance(this, get_student_world()->get_socrate());
         double potential_x, potential_y;
-        for (int i=0; i<distance; i++){
-            getPositionInThisDirection(new_dir, 1, potential_x, potential_y);
+        
+            getPositionInThisDirection(new_dir, 3, potential_x, potential_y);
             if(!get_student_world()->movement_overlap(potential_x, potential_y))
               {
-                  moveAngle(getDirection(),1);
+                  moveAngle(getDirection(),3);
               }
             else return;
        
-    }
+        set_continue_moving();
     }
     hurt_socrate();
     generate_new();
@@ -407,16 +410,24 @@ void E_coli::continue_moving()
 {
     double distance_to_socrate = calculate_distance(this, get_student_world()->get_socrate());
     if(distance_to_socrate<=256*256)
-    {Direction theta = get_student_world() ->get_socrate()->getDirection();
-        
+    {
+       
         for (int i=0;i<10;i++)
         {
-            if(){}
-            else{
-                theta = theta+10; 
+            double theta = get_change_angle(get_student_world() -> get_socrate());
+            double potential_x, potential_y;
+            getPositionInThisDirection(theta, 2, potential_x, potential_y);
+             if(!get_student_world()->movement_overlap(potential_x, potential_y))
+            {
+                moveTo(potential_x,potential_y);
+                return;
+            }
+             else{
+                 theta = theta+10;
+             }
             }
         }
-    }
+    
 }
 void E_coli::move_to_food(){}
 
@@ -425,6 +436,12 @@ pit::pit(double x, double y, StudentWorld* new_petri, int initial_r_s , int init
     r_s = initial_r_s;
     a_s = initial_a_s;
     Ecoli = initial_Ecoli;
+    get_student_world()->increase_pit_counter();
+}
+
+pit::~pit()
+{
+    get_student_world()->decrease_pit_counter();
 }
 
 void pit::doSomething()
@@ -435,6 +452,7 @@ void pit::doSomething()
         set_alive(-1);
         
     } else {
+        if(randInt(1,50)==1){
         int ch;
         bacteria *new_bac = nullptr;
         while (r_s + a_s + Ecoli > 0)
@@ -464,13 +482,16 @@ void pit::doSomething()
         }
         get_student_world()->add_actor(new_bac);
     }
+    }
 }
 
 goodie::goodie(int image_id, double x, double y, StudentWorld* new_petri, int increase_pt, int dir, int dep):Actor(image_id, x, y, new_petri, true, dir, dep)
 {
-    life_time = max(rand()%(300-10*get_student_world()->getLevel()),50);
-    int increased_point = increase_pt;
+    life_time = max(randInt(0, 300-10*get_student_world()->getLevel()),50);
+    increased_point = increase_pt;
 }
+
+
 
 void goodie::doSomething()
 {
@@ -486,8 +507,7 @@ void goodie::doSomething()
         }
     }
     if(life_time<=0)
-    {set_alive(-1);
-    }
+    { set_alive(-1); }
     life_time--;
 }
 
@@ -517,8 +537,41 @@ void extra_life_goodie::specific_reaction()
 }
 
 
+bacteria::~bacteria()
+{
+    get_student_world()->decrease_counter();
+}
 
 
+ double bacteria::get_change_angle(Actor* a)
+{
+    double x_difference = getX() - get_student_world() -> get_socrate() -> getX();
+    double y_difference = getY() - get_student_world() -> get_socrate() -> getY();
+    double tan_ratio = y_difference / x_difference;
+    double difference_angle = atan(tan_ratio);
+    const double PI = 4 * atan(1);
+    difference_angle = difference_angle/PI*180; 
+    double socrate_x = get_student_world() -> get_socrate() -> getX();
+    double socrate_y = get_student_world() -> get_socrate()  -> getY();
+    double this_x = getX();
+    double this_y = getY();
+   
+    if(socrate_y >= this_y && socrate_x <= this_x)
+    {
+        difference_angle = 180+difference_angle;
+    }
+    else if(socrate_y <= this_y && socrate_x >= this_x)
+    {
+        difference_angle = 180+difference_angle;
+    }
+    else if(socrate_y <= this_y && socrate_x >= this_x)
+    {
+         difference_angle = 360+difference_angle;
+    }
+    else {}
+    
+    return difference_angle;
+}
 
 
 

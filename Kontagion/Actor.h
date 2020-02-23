@@ -89,18 +89,23 @@ public:
     bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int hurt_pt, int movement_plan_distance=0,
             Direction dir=90, bool damage=true,  int depth=0);
     void doSomething();
+    ~ bacteria();
+    
 protected:
     void hurt_socrate();
     void generate_new();
     void eat_food();
     virtual void continue_moving();
     virtual void move_to_food();
+    void set_continue_moving();
+    double get_change_angle(Actor* a); 
 private:
     int m_movement_distance;
     int food_count;
     int initial_pt;
     int my_id;
     int hurt_point;
+    bool continue_moving_or_not;
 };
 
 class fungus:public Actor{
@@ -134,7 +139,8 @@ public:
 
 class pit:public Actor{
 public:  pit(double x, double y, StudentWorld* new_petri, int initial_r_s = 5, int initial_a_s = 3, int initial_Ecoli = 2, Direction dir=0, int depth=1);
-    void doSomething(); 
+    void doSomething();
+    ~ pit(); 
 private:
     int r_s;
     int a_s;

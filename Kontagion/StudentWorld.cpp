@@ -15,13 +15,15 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
-    pit_over = false; 
-    player = nullptr;
+    pit_over = false;
+    player=nullptr;
+    bac_counter = 0;
 }
 
 //construct a new socrates and the number of dirt in the game
 int StudentWorld::init()
 {
+    bac_counter = 0;
     player = new Socrates(this);
     int L = getLevel();
    
@@ -30,25 +32,21 @@ int StudentWorld::init()
         int position_x, position_y;
         size_t current_size = all_actor.size();
         do{
-         do{
             position_x = randInt(8,248);
             position_y = randInt(8,248);
-               }while((position_x-128)*(position_x-128)+(position_y-128)*(position_y-128) > 120*120);
+            if ((position_x-128)*(position_x-128)+(position_y-128)*(position_y-128) > 120*120)
+                continue;
        
             pit* new_pit = new pit(position_x, position_y,this);
-                   if(check_other_overlap(new_pit)==nullptr)
-                   {
-                        all_actor.push_back(new_pit);
-                   }
-                   else delete new_pit;
+            if(check_other_overlap(new_pit)==nullptr)
+            {
+                all_actor.push_back(new_pit);
+            }
+            else delete new_pit;
                
         }while(all_actor.size()==current_size);
         
     }
-    
-    
-
-    
     
     int food_num = min(5*L, 25);
     for (int i=0; i<food_num; i++)
@@ -71,6 +69,7 @@ int StudentWorld::init()
         }while(all_actor.size()==current_size);
         
     }
+    
     int numdirt = max(180 - 20*L, 20);
        for(int i=0; i<numdirt; i++)
        {
@@ -83,7 +82,6 @@ int StudentWorld::init()
            dirt* new_dirt = new dirt(position_x, position_y,this);
            all_actor.push_back(new_dirt);
        }
-    
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -100,17 +98,8 @@ int StudentWorld::move()
         else i++;
     }
     player->doSomething();
-
-//if socrates ahs cleared the current petri dish and the pits have disappeared, then advance to next level
-    list<Actor*>::iterator it = all_actor.begin();
-    for(int i=0; i<getLevel(); i++)
-    {
-        if((*it)->check_alive())  break;
-    }
     
-//    return GWSTATUS_FINISHED_LEVEL;
-  
-    
+//delete the dead thing in the petri
     list<Actor*>::iterator check_death = all_actor.begin();
     while(check_death!=all_actor.end())
     {
@@ -123,6 +112,13 @@ int StudentWorld::move()
         }
         check_death++;
     }
+    
+    //if socrates ahs cleared the current petri dish and the pits have disappeared, then advance to next level
+    if(bac_counter==0 && pit_counter==0)
+        return GWSTATUS_FINISHED_LEVEL;
+    
+    //add new things to the petri
+    //add fungus to the petri
     int chance_fungus = max(510-getLevel()*10, 200);
     int rand_num = randInt(0,chance_fungus);
     if(rand_num==0)
@@ -131,15 +127,39 @@ int StudentWorld::move()
         fungus* new_fungus = new fungus(128,128,this,true,new_dir);
         double potential_x, potential_y;
         new_fungus -> getPositionInThisDirection(new_dir, VIEW_RADIUS, potential_x, potential_y);
+        new_fungus -> moveTo(potential_x, potential_y);
+        all_actor.push_back(new_fungus);
     }
+    
+    //add new goodie to the petri
     int chance_goodie = max(510-getLevel()*10, 250);
-    rand_num = randInt(1,10);
-    if(1<=rand_num<=6)
+    rand_num = randInt(0,chance_goodie);
+    if(rand_num == 0)
     {
-        restore_health_goodie* new_restore = new restore_health_goodie(
+        goodie* goodie_new;
+        int goodie_generating_chance = randInt(1,10);
+        if(goodie_generating_chance <= 6)
+        {
+            goodie_new = new restore_health_goodie(128,128,this);
+        }
+        else if (goodie_generating_chance <= 9)
+        {
+            goodie_new = new flame_thrower_goodie(128,128,this);
+        }
+        else
+        {
+            goodie_new = new extra_life_goodie(128,128,this);
+        }
+        Direction new_dir = randInt(0,359);
+        goodie_new -> setDirection(new_dir);
+        double potential_x, potential_y;
+        goodie_new -> getPositionInThisDirection(new_dir, VIEW_RADIUS, potential_x, potential_y);
+        goodie_new -> moveTo(potential_x, potential_y);
+        all_actor.push_back(goodie_new);
     }
     
     
+    //update the string stream 
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -154,7 +174,6 @@ void StudentWorld::cleanUp()
         delete *n;
         all_actor.erase(n);
     }
-    
 }
 
 StudentWorld::~StudentWorld()
@@ -212,13 +231,12 @@ void StudentWorld::add_flame(double x, double y)
         player -> getPositionInThisDirection(current_angle, 2*SPRITE_RADIUS, new_flame_x, new_flame_y);
         flame* new_flame = new flame(new_flame_x, new_flame_y,this, current_angle, player);
         current_angle += 22;
-      
         all_actor.push_back(new_flame);
     }
 }
 
 //return socrate
-Actor* StudentWorld::get_socrate() const
+Socrates* StudentWorld::get_socrate() const
 {
     return player;
 }
@@ -235,6 +253,7 @@ bool StudentWorld::movement_overlap(double x, double y)
            double distance = pow((current_x-x),2)+pow((current_y-y),2);
            if(distance <=SPRITE_RADIUS*SPRITE_RADIUS) return true;
        }
+           it++;
        }
        return false;
 }
@@ -276,4 +295,22 @@ void StudentWorld::set_pit_over()
     pit_over=true; 
 }
 
+void StudentWorld::increase_counter()
+{
+    bac_counter++;
+}
+       
+void StudentWorld::decrease_counter()
+{
+    bac_counter--;
+}
 
+void StudentWorld::increase_pit_counter()
+{
+    pit_counter++;
+}
+void StudentWorld::decrease_pit_counter()
+{
+    pit_counter--; 
+}
+                                                                       
