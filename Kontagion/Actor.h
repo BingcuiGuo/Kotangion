@@ -92,11 +92,11 @@ public:
     ~ bacteria();
     
 protected:
-    void hurt_socrate();
-    void generate_new();
-    void eat_food();
-    virtual void continue_moving();
-    virtual void move_to_food();
+    bool hurt_socrate();
+    bool generate_new();
+    bool eat_food();
+    virtual bool continue_moving();
+    virtual bool move_to_food();
     void set_continue_moving();
     double get_change_angle(Actor* a); 
 private:
@@ -133,8 +133,8 @@ class E_coli: public bacteria{
 public:
     E_coli(double x, double y, StudentWorld* new_petri, int initial_pt=5,int hurt_pt = 4);
     virtual void doSomething();
-    virtual void continue_moving();
-    virtual void move_to_food();
+    virtual bool continue_moving();
+    virtual bool move_to_food();
 };
 
 class pit:public Actor{

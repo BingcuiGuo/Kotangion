@@ -1,0 +1,23 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "DF8A6ED9E104319AD02AD8051F5FC035062DB8A0",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "DF8A6ED9E104319AD02AD8051F5FC035062DB8A0" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "DF5F96B5-B066-4A1D-A416-16D61320D367",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "DF8A6ED9E104319AD02AD8051F5FC035062DB8A0" : "Kontagion-Part2\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Kontagion",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Kontagion.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/BingcuiGuo\/Kotangion.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "DF8A6ED9E104319AD02AD8051F5FC035062DB8A0"
+    }
+  ]
+}

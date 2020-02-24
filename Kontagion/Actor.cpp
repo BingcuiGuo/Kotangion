@@ -250,51 +250,53 @@ void bacteria::doSomething()
 }
 
 //if the bacteria overlap with socrate, then it would hurt it by the hurt_pt
-void bacteria::hurt_socrate()
+bool bacteria::hurt_socrate()
 {
     if(checkOverlap(get_student_world()->get_socrate()))
     {
         int current_hp = get_student_world()->get_socrate()->get_hit_pt();
                get_student_world()->get_socrate()->set_alive(current_hp-hurt_point);
-}
-    continue_moving();
-    move_to_food();
-   
+    }
+    if (continue_moving()) return 1;
+    if (move_to_food()) return 1;
+    return 0;
 }
 
-void bacteria::generate_new()
+bool bacteria::generate_new()
 {
-       if(food_count ==3)
-       {
-           if(getX()<VIEW_WIDTH/2) moveTo(getX()+SPRITE_RADIUS,getY());
-           else if(getX()>VIEW_WIDTH/2) moveTo(getX()-SPRITE_RADIUS,getY());
-           if(getY()<VIEW_HEIGHT/2) moveTo(getX(), getY()+SPRITE_RADIUS);
-           else if(getY()<VIEW_HEIGHT/2) moveTo(getX(), getY()-SPRITE_RADIUS);
-               double new_x = getX();
-           double new_y = getY();
-           bacteria* new_bacteria = new bacteria(my_id,new_x, new_y, get_student_world(), m_movement_distance,initial_pt,getDirection());
-           get_student_world()->add_actor(new_bacteria);
-           food_count = 0;
-       }
-    continue_moving();
-       move_to_food();
- 
+    if(food_count ==3)
+    {
+        double new_x = getX();
+        if(new_x<VIEW_WIDTH/2) new_x +=SPRITE_RADIUS;
+        else if(new_x>VIEW_WIDTH/2) new_x -= SPRITE_RADIUS;
+        
+        double new_y = getY();
+        if(getY()<VIEW_HEIGHT/2) new_y +=SPRITE_RADIUS;
+        else if(getY()<VIEW_HEIGHT/2) new_y -= SPRITE_RADIUS;
+        
+        bacteria* new_bacteria = new bacteria(my_id,new_x, new_y, get_student_world(), m_movement_distance,initial_pt,getDirection());
+        get_student_world()->add_actor(new_bacteria);
+        food_count = 0;
+    }
+    if (continue_moving()) return 1;
+    if (move_to_food()) return 1;
+    return 0;
 }
 
-void bacteria::eat_food()
+bool bacteria::eat_food()
 {
         if(get_student_world()->food_overlap(this)!=nullptr)
                   {
                       food_count++;
                       get_student_world()->food_overlap(this)->set_alive(-1);
                   }
-    continue_moving();
-       move_to_food();
- 
+    if (continue_moving()) return 1;
+    if (move_to_food()) return 1;
+    return 0;
 }
   
 
-void bacteria::continue_moving()
+bool bacteria::continue_moving()
 {
     if(m_movement_distance>0 && continue_moving_or_not == true)
     {m_movement_distance--;
@@ -302,23 +304,22 @@ void bacteria::continue_moving()
         getPositionInThisDirection(getDirection(), 3, potential_x, potential_y);
         double center_distance = pow((potential_x-VIEW_WIDTH/2),2)+pow((potential_y-VIEW_HEIGHT/2),2);
         if(!get_student_world()->movement_overlap(potential_x, potential_y) && center_distance < VIEW_RADIUS*VIEW_RADIUS)
-            {
-                moveAngle(getDirection(),3);
-            }
+        {
+            moveAngle(getDirection(),3);
+        }
         else
         {
             int new_direction = randInt(0, 359);
-                                   setDirection(new_direction);
-                                   m_movement_distance=10;
-                                   return;
+            setDirection(new_direction);
+            m_movement_distance=10;
+            return true;
         }
-    
-    
-}
+    }
+    return false;
 }
 
 
-void bacteria::move_to_food()
+bool bacteria::move_to_food()
 {
     if(m_movement_distance<=0 && continue_moving_or_not == true){
         double new_directional_angle = get_change_angle(get_student_world()->get_socrate());
@@ -327,7 +328,7 @@ void bacteria::move_to_food()
         int new_dir = randInt(0,359);
         setDirection(new_dir);
         m_movement_distance=10;
-        return;
+        return true;
     }
     else{
         
@@ -335,6 +336,7 @@ void bacteria::move_to_food()
             getPositionInThisDirection(new_directional_angle, 3, potential_x, potential_y);
             if(!get_student_world()->movement_overlap(potential_x, potential_y))
                 {
+                    setDirection(new_directional_angle);
                     moveAngle(new_directional_angle,3);
                 }
             else{
@@ -342,13 +344,14 @@ void bacteria::move_to_food()
                 int new_direction = randInt(0, 359);
                 setDirection(new_direction);
                  m_movement_distance=10;
-                 return;
+                 return true;
             }
         
         
         
     }
 }
+    return false;
 }
 
  void bacteria::set_continue_moving()
@@ -375,7 +378,8 @@ void aggressive_salmonella::doSomething()
     double socrate_distance = calculate_distance(this, get_student_world()->get_socrate());
     if(socrate_distance <=72*72) 
     {
-        Direction new_dir = get_student_world()->get_socrate()->getDirection();
+        //TODO change this
+        Direction new_dir = get_change_angle(get_student_world() -> get_socrate());
         double potential_x, potential_y;
         
             getPositionInThisDirection(new_dir, 3, potential_x, potential_y);
@@ -406,7 +410,7 @@ void E_coli::doSomething()
     eat_food();
 }
 
-void E_coli::continue_moving()
+bool E_coli::continue_moving()
 {
     double distance_to_socrate = calculate_distance(this, get_student_world()->get_socrate());
     if(distance_to_socrate<=256*256)
@@ -420,16 +424,17 @@ void E_coli::continue_moving()
              if(!get_student_world()->movement_overlap(potential_x, potential_y))
             {
                 moveTo(potential_x,potential_y);
-                return;
+                return true;
             }
              else{
                  theta = theta+10;
              }
             }
         }
-    
+    return false;
 }
-void E_coli::move_to_food(){}
+
+bool E_coli::move_to_food(){return false;}
 
 
 pit::pit(double x, double y, StudentWorld* new_petri, int initial_r_s , int initial_a_s , int initial_Ecoli, Direction dir, int depth):Actor(IID_PIT,x,y,new_petri, false, dir,depth){
@@ -552,24 +557,12 @@ bacteria::~bacteria()
     const double PI = 4 * atan(1);
     difference_angle = difference_angle/PI*180; 
     double socrate_x = get_student_world() -> get_socrate() -> getX();
-    double socrate_y = get_student_world() -> get_socrate()  -> getY();
     double this_x = getX();
-    double this_y = getY();
    
-    if(socrate_y >= this_y && socrate_x <= this_x)
+    if( socrate_x <= this_x)
     {
         difference_angle = 180+difference_angle;
     }
-    else if(socrate_y <= this_y && socrate_x >= this_x)
-    {
-        difference_angle = 180+difference_angle;
-    }
-    else if(socrate_y <= this_y && socrate_x >= this_x)
-    {
-         difference_angle = 360+difference_angle;
-    }
-    else {}
-    
     return difference_angle;
 }
 
