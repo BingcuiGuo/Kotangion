@@ -3,6 +3,7 @@
 #include "GameConstants.h"
 #include <string>
 #include<list>
+#include<sstream>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
@@ -124,7 +125,7 @@ int StudentWorld::move()
     if(rand_num==0)
     {
         int new_dir = randInt(0,359);
-        fungus* new_fungus = new fungus(128,128,this,true,new_dir);
+        fungus* new_fungus = new fungus(128,128,this);
         double potential_x, potential_y;
         new_fungus -> getPositionInThisDirection(new_dir, VIEW_RADIUS, potential_x, potential_y);
         new_fungus -> moveTo(potential_x, potential_y);
@@ -158,6 +159,14 @@ int StudentWorld::move()
         all_actor.push_back(goodie_new);
     }
     
+    ostringstream oss;
+    oss<<"Score:  "   <<setfill('0')<<setw(6)<<getScore();
+    oss<<"  Level:  " <<getLevel();
+    oss<<"  Lives:  " <<getLives();
+    oss<<"  health:  "<<player->get_hit_pt();
+    oss<<"  Sprays:  "<<player->get_spray();
+    oss<<"  Flames:  "<<player->get_flame();
+    setGameStatText(oss.str());
     
     //update the string stream 
     return GWSTATUS_CONTINUE_GAME;
@@ -279,7 +288,7 @@ Actor* StudentWorld::food_overlap(Actor* a)
                double food_x = (*it)->getX();
                double food_y = (*it)->getY();
                double current_distance = pow((current_x - food_x),2)+pow((current_y-food_y),2);
-               if(current_distance < 128*128 && current_distance < min_distance)
+               if(current_distance < 128 * 128 && current_distance < min_distance)
                {
                    min_distance = current_distance;
                    initial_food = (*it);

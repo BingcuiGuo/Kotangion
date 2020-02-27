@@ -46,6 +46,11 @@ bool Actor::get_damagae_status() const
     return isdamaneagble;
 }
 
+void Actor::damage(int reduced_score)
+{
+    if (isdamaneagble) set_alive(-1);
+}
+
 //constructor
 Socrates::Socrates(StudentWorld* new_petri):
 Actor(IID_PLAYER, 0, 128, new_petri, 0)
@@ -129,13 +134,36 @@ void Socrates::doSomething()
             }
             
         }
-        else return;
+        else{
+            if(spray_charges<20) spray_charges++;
+        }
     }
+}
+
+int Socrates::get_spray()
+{return spray_charges;}
+
+
+int Socrates::get_flame()
+{
+    return flame_thrower; 
 }
 
 void Socrates::set_flame(int flame_added)
 {
     flame_thrower +=flame_added;
+}
+
+void Socrates::damage(int reduced_score)
+{
+    
+    set_alive(get_hit_pt()+reduced_score);
+    if(get_hit_pt()>0)
+    {get_student_world() -> playSound(SOUND_PLAYER_HURT);}
+    else {
+        set_alive(-1);
+        get_student_world()->playSound(SOUND_PLAYER_DIE);
+    }
 }
 
 //dirt construtcor
@@ -147,6 +175,8 @@ Actor(IID_DIRT, startX, startY, new_petri,true, dir, depth) {}
 void dirt::doSomething()
 {
 }
+
+
 
 //return the socrates' directional angle
 int Socrates::get_directional_angle() const
@@ -180,7 +210,8 @@ void weapon::doSomething()
         if(get_student_world()->check_damage_overlap(this)!=nullptr)
         {
             Actor* damage_obj = get_student_world()->check_damage_overlap(this);
-            damage_obj -> set_alive(damage_obj->get_hit_pt()-loss_pt);
+            //damage_obj -> set_alive(damage_obj->get_hit_pt()-loss_pt);
+            damage_obj -> damage(-loss_pt);
             set_alive(-1);
             return;
         }
@@ -209,28 +240,14 @@ spray::spray(double x, double y, StudentWorld* new_petri,  Direction dir, Socrat
 weapon(IID_SPRAY, x,y, new_petri, dir, 112, new_socrates){set_loss_pt(2); }
 
 //fungus constructor
-fungus::fungus(double startX, double startY,StudentWorld* new_petri, bool damage, Direction dir, int depth):
-Actor(IID_FUNGUS,startX,startY,new_petri, damage, dir, depth){
-    life_time = max(rand()%(300-10*new_petri->getLevel()),50);
+fungus::fungus(double startX, double startY,StudentWorld* new_petri):
+goodie(IID_FUNGUS,startX,startY,new_petri, -50){}
+
+void fungus::specific_reaction()
+{
+    get_student_world()->get_socrate()->damage(-20);
 }
 
-void fungus::doSomething()
-{
-    if(!check_alive()) return;
-    else{
-        
-        if(get_student_world()->get_socrate()->check_alive())
-        {
-            get_student_world() -> increaseScore(-50);
-            set_alive(-1);
-            int current_point = get_student_world() -> get_socrate() ->get_hit_pt();
-            get_student_world()->get_socrate()->set_alive(current_point-20);
-            return;
-        }
-        if(life_time<=0) set_alive(-1);
-        life_time--;
-    }
-}
 
 bacteria::bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int hurt_pt, int movement_plan_distance,Direction dir, bool damage, int depth):Actor(image_id, x,y,new_petri, true, dir, depth)
 {
@@ -244,62 +261,38 @@ bacteria::bacteria(int image_id, double x, double y, StudentWorld* new_petri, in
     continue_moving_or_not = true;
 }
 
-void bacteria::doSomething()
-{
-    if(!check_alive()) return;
-}
-
 //if the bacteria overlap with socrate, then it would hurt it by the hurt_pt
-bool bacteria::hurt_socrate()
+void bacteria::hurt_socrate()
 {
-    if(checkOverlap(get_student_world()->get_socrate()))
-    {
-        int current_hp = get_student_world()->get_socrate()->get_hit_pt();
-               get_student_world()->get_socrate()->set_alive(current_hp-hurt_point);
-    }
-    if (continue_moving()) return 1;
-    if (move_to_food()) return 1;
-    return 0;
+    get_student_world()->get_socrate()->damage(-hurt_point);
 }
 
-bool bacteria::generate_new()
+void bacteria::generate_new()
 {
-    if(food_count ==3)
-    {
-        double new_x = getX();
-        if(new_x<VIEW_WIDTH/2) new_x +=SPRITE_RADIUS;
-        else if(new_x>VIEW_WIDTH/2) new_x -= SPRITE_RADIUS;
+    double new_x = getX();
+    if(new_x<VIEW_WIDTH/2) new_x +=SPRITE_RADIUS;
+    else if(new_x>VIEW_WIDTH/2) new_x -= SPRITE_RADIUS;
         
-        double new_y = getY();
-        if(getY()<VIEW_HEIGHT/2) new_y +=SPRITE_RADIUS;
-        else if(getY()<VIEW_HEIGHT/2) new_y -= SPRITE_RADIUS;
+    double new_y = getY();
+    if(getY()<VIEW_HEIGHT/2) new_y +=SPRITE_RADIUS;
+    else if(getY()<VIEW_HEIGHT/2) new_y -= SPRITE_RADIUS;
         
-        bacteria* new_bacteria = new bacteria(my_id,new_x, new_y, get_student_world(), m_movement_distance,initial_pt,getDirection());
-        get_student_world()->add_actor(new_bacteria);
-        food_count = 0;
-    }
-    if (continue_moving()) return 1;
-    if (move_to_food()) return 1;
-    return 0;
+    bacteria* new_bacteria = generate_new_bacteria_point(new_x, new_y);
+    get_student_world()->add_actor(new_bacteria);
+    food_count = 0;
 }
 
-bool bacteria::eat_food()
+void bacteria::eat_food()
 {
-        if(get_student_world()->food_overlap(this)!=nullptr)
-                  {
-                      food_count++;
-                      get_student_world()->food_overlap(this)->set_alive(-1);
-                  }
-    if (continue_moving()) return 1;
-    if (move_to_food()) return 1;
-    return 0;
+      food_count++;
+      get_student_world()->food_overlap(this)->set_alive(-1);
 }
   
 
 bool bacteria::continue_moving()
 {
-    if(m_movement_distance>0 && continue_moving_or_not == true)
-    {m_movement_distance--;
+//    if(m_movement_distance>0 && continue_moving_or_not == true)
+    m_movement_distance--;
         double potential_x, potential_y;
         getPositionInThisDirection(getDirection(), 3, potential_x, potential_y);
         double center_distance = pow((potential_x-VIEW_WIDTH/2),2)+pow((potential_y-VIEW_HEIGHT/2),2);
@@ -314,14 +307,19 @@ bool bacteria::continue_moving()
             m_movement_distance=10;
             return true;
         }
-    }
+    
     return false;
 }
 
 
+int bacteria::get_food_count() const
+{
+    return food_count;
+}
+
 bool bacteria::move_to_food()
 {
-    if(m_movement_distance<=0 && continue_moving_or_not == true){
+//    if(m_movement_distance<=0 && continue_moving_or_not == true)
         double new_directional_angle = get_change_angle(get_student_world()->get_socrate());
     if(!get_student_world()->food_overlap(this))
     {
@@ -335,12 +333,11 @@ bool bacteria::move_to_food()
          double potential_x, potential_y;
             getPositionInThisDirection(new_directional_angle, 3, potential_x, potential_y);
             if(!get_student_world()->movement_overlap(potential_x, potential_y))
-                {
-                    setDirection(new_directional_angle);
-                    moveAngle(new_directional_angle,3);
-                }
+            {
+                setDirection(new_directional_angle);
+                moveAngle(new_directional_angle,3);
+            }
             else{
-
                 int new_direction = randInt(0, 359);
                 setDirection(new_direction);
                  m_movement_distance=10;
@@ -350,8 +347,18 @@ bool bacteria::move_to_food()
         
         
     }
-}
+
     return false;
+}
+
+int bacteria::get_movement_distance() const
+{
+    return m_movement_distance;
+}
+
+bool bacteria::get_movement_status() const
+{
+    return continue_moving_or_not;
 }
 
  void bacteria::set_continue_moving()
@@ -359,14 +366,74 @@ bool bacteria::move_to_food()
     continue_moving_or_not = false;
 }
 
+void bacteria::damage(int reduced_score)
+{
+    set_alive(get_hit_pt()+reduced_score);
+    if(check_alive()) get_student_world()->playSound(SOUND_SALMONELLA_HURT);
+    else
+    {
+        set_alive(-1);
+        //TODO ECOLI DAMAGE SOUND
+        get_student_world()->playSound(SOUND_SALMONELLA_DIE);
+        get_student_world()->increaseScore(100);
+        if(randInt(0, 1)==0)
+        {
+            food* new_food = new food(get_student_world(), getX(), getY());
+            get_student_world() -> add_actor(new_food);
+        }
+    }
+}
+
+void E_coli::damage(int reduced_score)
+{
+    set_alive(get_hit_pt()+reduced_score);
+    if(check_alive()) get_student_world()->playSound(SOUND_ECOLI_HURT);
+    else
+    {
+        set_alive(-1);
+        //TODO ECOLI DAMAGE SOUND
+        get_student_world()->playSound(SOUND_ECOLI_DIE);
+        get_student_world()->increaseScore(100);
+        if(randInt(0, 1)==0)
+        {
+            food* new_food = new food(get_student_world(), getX(), getY());
+            get_student_world() -> add_actor(new_food);
+        }
+    }
+}
+
+bacteria* regular_salmonella::generate_new_bacteria_point(double x, double y)
+{
+    return new regular_salmonella(x, y, get_student_world());
+}
+
+bacteria* aggressive_salmonella::generate_new_bacteria_point(double x, double y)
+{
+    return new aggressive_salmonella(x, y, get_student_world());
+}
+
+
+bacteria* E_coli::generate_new_bacteria_point(double x, double y)
+{
+    return new E_coli(x, y, get_student_world());
+}
+
+                                      
 regular_salmonella::regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt,int hurt_pt):bacteria(IID_SALMONELLA, x, y, new_petri,initial_pt,hurt_pt ){}
 
 void regular_salmonella::doSomething()
 {
-    bacteria::doSomething();
-    hurt_socrate();
-    generate_new();
-    eat_food();
+    Actor *closest_food = get_student_world()->food_overlap(this);
+    if(!check_alive()) return;
+    if(checkOverlap(get_student_world()->get_socrate()))  hurt_socrate();
+    else if(get_food_count() == 3)  generate_new();
+    else if(closest_food != nullptr && isOverlap(closest_food->getX(), closest_food->getY()))
+        eat_food();
+    
+    if(get_movement_distance() > 0 && get_movement_status() == true)
+        continue_moving();
+    else move_to_food();
+    
 }
 
 aggressive_salmonella::aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt,int hurt_pt):
@@ -374,26 +441,34 @@ bacteria(IID_SALMONELLA,x,y,new_petri, initial_pt,hurt_pt){}
 
 void aggressive_salmonella::doSomething()
 {
-    bacteria::doSomething();
+    bool no_6 = false;
+    Actor *closest_food = get_student_world()->food_overlap(this);
+    if(!check_alive()) return;
     double socrate_distance = calculate_distance(this, get_student_world()->get_socrate());
     if(socrate_distance <=72*72) 
     {
-        //TODO change this
         Direction new_dir = get_change_angle(get_student_world() -> get_socrate());
         double potential_x, potential_y;
         
             getPositionInThisDirection(new_dir, 3, potential_x, potential_y);
-            if(!get_student_world()->movement_overlap(potential_x, potential_y))
-              {
-                  moveAngle(getDirection(),3);
-              }
+            if(!get_student_world()->movement_overlap(potential_x, potential_y) &&
+               pow(potential_x - 128, 2) + pow(potential_y - 128, 2) < VIEW_RADIUS * VIEW_RADIUS)
+            {
+                moveAngle(getDirection(),3);
+                no_6 = true;
+            }
             else return;
        
         set_continue_moving();
     }
-    hurt_socrate();
-    generate_new();
-    eat_food();
+    if(checkOverlap(get_student_world()->get_socrate()))  hurt_socrate();
+    else if(get_food_count()==3)  generate_new();
+    else if(closest_food != nullptr && isOverlap(closest_food->getX(), closest_food->getY()))
+        eat_food();
+    if (no_6) return;
+    if(get_movement_distance()>0 && get_movement_status() == true)
+        continue_moving();
+    else move_to_food();
 }
         
 
@@ -404,16 +479,20 @@ bacteria(IID_ECOLI,x, y, new_petri, initial_pt, hurt_pt){}
 
 void E_coli::doSomething()
 {
-    bacteria::doSomething();
-    hurt_socrate();
-    generate_new();
-    eat_food();
+    Actor *closest_food = get_student_world()->food_overlap(this);
+   if(!check_alive()) return;
+   if(checkOverlap(get_student_world()->get_socrate()))  hurt_socrate();
+   else if(get_food_count()==3)  generate_new();
+   else if(closest_food != nullptr && isOverlap(closest_food->getX(), closest_food->getY()))
+       eat_food();
+   
+   continue_moving();
 }
 
 bool E_coli::continue_moving()
 {
     double distance_to_socrate = calculate_distance(this, get_student_world()->get_socrate());
-    if(distance_to_socrate<=256*256)
+    if(distance_to_socrate <= 256*256)
     {
        
         for (int i=0;i<10;i++)
@@ -421,7 +500,7 @@ bool E_coli::continue_moving()
             double theta = get_change_angle(get_student_world() -> get_socrate());
             double potential_x, potential_y;
             getPositionInThisDirection(theta, 2, potential_x, potential_y);
-             if(!get_student_world()->movement_overlap(potential_x, potential_y))
+             if(!get_student_world()->movement_overlap(potential_x, potential_y) && pow(potential_x - 128, 2) + pow(potential_x - 128, 2) < VIEW_RADIUS * VIEW_RADIUS)
             {
                 moveTo(potential_x,potential_y);
                 return true;
@@ -492,7 +571,7 @@ void pit::doSomething()
 
 goodie::goodie(int image_id, double x, double y, StudentWorld* new_petri, int increase_pt, int dir, int dep):Actor(image_id, x, y, new_petri, true, dir, dep)
 {
-    life_time = max(randInt(0, 300-10*get_student_world()->getLevel()),50);
+    life_time = max(randInt(0, 300-10*get_student_world()->getLevel()-1),50);
     increased_point = increase_pt;
 }
 

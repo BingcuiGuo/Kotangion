@@ -21,6 +21,7 @@ public:
     bool checkOverlap(Actor* actor_pt);
     virtual bool is_food(){return false;}
     double calculate_distance(Actor* a, Actor*b);
+    virtual void damage(int reduced_score=-1);
 private:
     int hit_pt;
     bool isdamaneagble;
@@ -36,7 +37,10 @@ public:
     Socrates(StudentWorld* new_petri);
     virtual void doSomething();
     int get_directional_angle() const;
-    void set_flame(int flame_added); 
+    void set_flame(int flame_added);
+    int get_spray();
+    int get_flame();
+    void damage(int reduced_score);
 private:
     int positional_angle;
     int spray_charges;
@@ -88,17 +92,20 @@ class bacteria:public Actor{
 public:
     bacteria(int image_id, double x, double y, StudentWorld* new_petri, int initial_point,int hurt_pt, int movement_plan_distance=0,
             Direction dir=90, bool damage=true,  int depth=0);
-    void doSomething();
     ~ bacteria();
-    
+    int get_food_count() const;
 protected:
-    bool hurt_socrate();
-    bool generate_new();
-    bool eat_food();
+    void hurt_socrate();
+    void generate_new();
+    void eat_food();
     virtual bool continue_moving();
     virtual bool move_to_food();
     void set_continue_moving();
-    double get_change_angle(Actor* a); 
+    double get_change_angle(Actor* a);
+    int get_movement_distance() const;
+    bool get_movement_status() const;
+    void damage(int reduced_score);
+    virtual bacteria* generate_new_bacteria_point(double x, double y)=0;
 private:
     int m_movement_distance;
     int food_count;
@@ -108,24 +115,34 @@ private:
     bool continue_moving_or_not;
 };
 
-class fungus:public Actor{
+class goodie:public Actor{
 public:
-     fungus( double startX, double startY,StudentWorld* new_petri, bool damage=true, Direction dir = 0, int depth = 1);
-    void doSomething(); 
+    goodie(int image_id, double x, double y, StudentWorld* new_petri, int increase_pt, int dir=0, int dep=1);
+    void doSomething();
+    virtual void specific_reaction() = 0;
 private:
-    int life_time;
+    double life_time;
+    int increased_point;
+};
+
+class fungus:public goodie{
+public:
+     fungus(double startX, double startY,StudentWorld* new_petri);
+     virtual void specific_reaction();
 };
 
 class regular_salmonella:public bacteria{
 public:
     regular_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=4, int hurt_pt = 1);
     virtual void doSomething();
+    virtual bacteria* generate_new_bacteria_point(double x, double y);
 };
 
 class aggressive_salmonella:public bacteria{
 public:
     aggressive_salmonella(double x, double y, StudentWorld* new_petri, int initial_pt=10, int hurt_pt = 2);
     virtual void doSomething();
+    virtual bacteria* generate_new_bacteria_point(double x, double y);
     
 };
 
@@ -135,6 +152,8 @@ public:
     virtual void doSomething();
     virtual bool continue_moving();
     virtual bool move_to_food();
+    void damage(int reduced_score);
+    virtual bacteria* generate_new_bacteria_point(double x, double y);
 };
 
 class pit:public Actor{
@@ -147,15 +166,6 @@ private:
     int Ecoli;
 };
 
-class goodie:public Actor{
-public:
-    goodie(int image_id, double x, double y, StudentWorld* new_petri, int increase_pt, int dir=0, int dep=1);
-    void doSomething();
-    virtual void specific_reaction() = 0; 
-private:
-    double life_time;
-    int increased_point;
-};
 
 class restore_health_goodie:public goodie
 {
